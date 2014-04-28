@@ -49,7 +49,7 @@
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/summonname"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView2"
@@ -61,8 +61,8 @@
         android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignRight="@+id/textView3"
-        android:layout_below="@+id/textView3"
+        android:layout_alignRight="@+id/summonname"
+        android:layout_below="@+id/summonname"
         android:text="Small Text"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 

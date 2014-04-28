@@ -3,10 +3,7 @@ package com.example.playerstats;
 import java.net.*;
 import java.io.*;
 
-import android.os.AsyncTask;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
+import org.json.JSONException;
 
 public class StatsPull {
 	private String summonerName, summonerID;
@@ -15,14 +12,9 @@ public class StatsPull {
 	
 	//  ---===== Player Statistics data =====---
 	// Wins
-	private String rankedPremade3x3Wins, rankedPremade5x5Wins, rankedTeam3x3Wins, rankedTeam5x5Wins, rankedSolo5x5Wins;
-	private String unrankedWins, coopVsAIWins;
-	// Normal Stats
-	private String nChampKills, nAssists, nMinionKills, nNeutralMonsterKills, nTotalTurretKills; 
-	// Ranked Solo 5x5 Stats
-	private String rChampKills, rAssists, rMinionKills, rNeutralMonsterKills, rTotalTurretKills;
-	// Normal 3x3 Stats
-	private String tvtChampKills, tvtAssists, tvtMinionKills, tvtNeutralMonsterKills, tvtTotalTurretKills;
+	private String wins5v5, kills5v5, assists5v5,   minionkills5v5, neutralminionkills5v5, turretsdestroyed5v5;
+	private String winsdom, killsdom, mostkillsdom, assistsdom,     mostassistsdom, highestscoredom, nodescaptureddom, mostnodescaptureddom, nodesneutralizeddom,mostnodesneutralizeddom;
+	private String wins3v3, kills3v3, assists3v3,   minionkills3v3, neutralminionkills3v3,turretsdestroyed3v3;
 
 	//--------------------------------------------------
 	// Takes in summoner name and returns summonerID
@@ -47,54 +39,72 @@ public class StatsPull {
 	//--------------------------------------------------
 	// Uses summoner ID to pull summoner statistics
 	//--------------------------------------------------
-	private void retrieveSummonerStats() throws IOException{
+	private void retrieveSummonerStats() throws IOException, JSONException {
 		String statsrequest = "https://prod.api.pvp.net/api/lol/na/v1.2/stats/by-summoner/" + summonerID + "/summary" + apikey;
-		System.out.println("love is empty");
 		URL oracle = new URL(statsrequest);
 		URLConnection yc = oracle.openConnection();
-		BufferedReader summonerStatsReader = new BufferedReader(new InputStreamReader(yc.getInputStream()));
-		this.summonerStats = new SummonerStats(summonerName, summonerStatsReader);
+		this.summonerStats = new SummonerStats(summonerName, yc.getInputStream());
+		statsExtract();
 	}
 	
-	private void StatsExtract(){
-		// Win Stats
-		this.rankedPremade3x3Wins = summonerStats.getSummaries().get("RankedPremade3x3").getStats().get("wins").toString();
-		this.rankedPremade5x5Wins = summonerStats.getSummaries().get("RankedPremade5x5").getStats().get("wins").toString();
-		this.rankedTeam3x3Wins    = summonerStats.getSummaries().get("RankedTeam3x3").getStats().get("wins").toString();
-		this.rankedTeam5x5Wins    = summonerStats.getSummaries().get("RankedTeam5x5").getStats().get("wins").toString();
-		this.rankedSolo5x5Wins    = summonerStats.getSummaries().get("RankedSolo5x5").getStats().get("wins").toString();
-		this.unrankedWins         = summonerStats.getSummaries().get("Unranked").getStats().get("wins").toString();
-		this.coopVsAIWins         = summonerStats.getSummaries().get("CoopVsAI").getStats().get("wins").toString();
+	private void statsExtract() throws JSONException {
 		
-		// Normal Stats
-		this.nAssists             = summonerStats.getSummaries().get("Unranked").getStats().get("aggregatedStats").get("totalAssists").toString();
-		this.nChampKills          = summonerStats.getSummaries().get("Unranked").getStats().get("aggregatedStats").get("totalChampionKills").toString();
-		this.nMinionKills		  = summonerStats.getSummaries().get("Unranked").getStats().get("aggregatedStats").get("totalMinionKills").toString();
-		this.nNeutralMonsterKills = summonerStats.getSummaries().get("Unranked").getStats().get("aggregatedStats").get("totalNeutralMinionsKilled").toString();
-		this.nTotalTurretKills    = summonerStats.getSummaries().get("Unranked").getStats().get("aggregatedStats").get("totalTurretsKilled").toString();
+		//getting 5v5 stat values
+		try {
+			this.wins5v5 					= summonerStats.getSummary("Unranked").getField("wins");
+			this.kills5v5 					= summonerStats.getSummary("Unranked").getAggregatedStat("totalChampionKills");
+			this.assists5v5 				= summonerStats.getSummary("Unranked").getAggregatedStat("totalAssists");
+			this.minionkills5v5 			= summonerStats.getSummary("Unranked").getAggregatedStat("totalMinionKills");
+			this.neutralminionkills5v5 		= summonerStats.getSummary("Unranked").getAggregatedStat("totalNeutralMinionsKilled");
+			this.turretsdestroyed5v5 		= summonerStats.getSummary("Unranked").getAggregatedStat("totalTurretsKilled");
+		} catch (JSONException e) {
+			this.wins5v5 = "5v5 Stats Unavailable.";
+		}
 		
-		// Ranked 5v5
-		this.rAssists             = summonerStats.getSummaries().get("RankedSolo5x5").getStats().get("aggregatedStats").get("totalAssists").toString();
-		this.rChampKills          = summonerStats.getSummaries().get("RankedSolo5x5").getStats().get("aggregatedStats").get("totalChampionKills").toString();
-		this.rMinionKills		  = summonerStats.getSummaries().get("RankedSolo5x5").getStats().get("aggregatedStats").get("totalMinionKills").toString();
-		this.rNeutralMonsterKills = summonerStats.getSummaries().get("RankedSolo5x5").getStats().get("aggregatedStats").get("totalNeutralMinionsKilled").toString();
-		this.rTotalTurretKills    = summonerStats.getSummaries().get("RankedSolo5x5").getStats().get("aggregatedStats").get("totalTurretsKilled").toString();
+		//getting dominion stat values
+		try {
+			this.winsdom 					= summonerStats.getSummary("OdinUnranked").getField("wins");
+			this.killsdom 					= summonerStats.getSummary("OdinUnranked").getAggregatedStat("totalChampionKills");
+			this.mostkillsdom 				= summonerStats.getSummary("OdinUnranked").getAggregatedStat("maxChampionsKilled");
+			this.assistsdom 				= summonerStats.getSummary("OdinUnranked").getAggregatedStat("totalAssists");
+			this.mostassistsdom  			= summonerStats.getSummary("OdinUnranked").getAggregatedStat("maxAssists");
+			this.highestscoredom 			= summonerStats.getSummary("OdinUnranked").getAggregatedStat("maxObjectivePlayerScore");
+			this.nodescaptureddom 			= summonerStats.getSummary("OdinUnranked").getAggregatedStat("totalNodeCapture");
+			this.mostnodescaptureddom 		= summonerStats.getSummary("OdinUnranked").getAggregatedStat("maxNodeCapture");
+			this.nodesneutralizeddom 		= summonerStats.getSummary("OdinUnranked").getAggregatedStat("totalNodeNeutralize");
+			this.mostnodesneutralizeddom 	= summonerStats.getSummary("OdinUnranked").getAggregatedStat("maxNodeNeutralize");
+		} catch (JSONException e){
+			this.winsdom = "Dominion Stats Unavailable.";
+		}
 		
-		// Normal 3v3
-		this.tvtAssists             = summonerStats.getSummaries().get("Unranked3x3").getStats().get("aggregatedStats").get("totalAssists").toString();
-		this.tvtChampKills          = summonerStats.getSummaries().get("Unranked3x3").getStats().get("aggregatedStats").get("totalChampionKills").toString();
-		this.tvtMinionKills		    = summonerStats.getSummaries().get("Unranked3x3").getStats().get("aggregatedStats").get("totalMinionKills").toString();
-		this.tvtNeutralMonsterKills = summonerStats.getSummaries().get("Unranked3x3").getStats().get("aggregatedStats").get("totalNeutralMinionsKilled").toString();
-		this.tvtTotalTurretKills    = summonerStats.getSummaries().get("Unranked3x3").getStats().get("aggregatedStats").get("totalTurretsKilled").toString();
+		//getting 3v3 stat values
+		try {
+			this.wins3v3 					= summonerStats.getSummary("Unranked3x3").getField("wins");
+			this.kills3v3 					= summonerStats.getSummary("Unranked3x3").getAggregatedStat("totalChampionKills");
+			this.assists3v3 				= summonerStats.getSummary("Unranked3x3").getAggregatedStat("totalAssists");
+			this.minionkills3v3 			= summonerStats.getSummary("Unranked3x3").getAggregatedStat("totalMinionKills");
+			this.neutralminionkills3v3 		= summonerStats.getSummary("Unranked3x3").getAggregatedStat("totalNeutralMinionsKilled");
+			this.turretsdestroyed3v3 		= summonerStats.getSummary("Unranked3x3").getAggregatedStat("totalTurretsKilled");
+		} catch (JSONException e) {
+			this.wins3v3 = "3v3 Stats Unavailable.";
+		}
 	}
 	
 	public StatsPull(String givenSummonerName) throws IOException{
 		this.summonerName = givenSummonerName;
 		this.retrieveSummonerID();
-		this.retrieveSummonerStats();
+		try {
+			this.retrieveSummonerStats();
+		} catch (JSONException e) {
+			System.err.println(e);
+			System.exit(1);
+		}
 	}
 	
 	// Getter Methods
+	public String getwins5v5(){
+		return wins5v5;
+	}
 	public String getSummonerName() {
 		return summonerName;
 	}
@@ -107,91 +117,94 @@ public class StatsPull {
 		return summonerStats;
 	}
 
-	public String getRankedPremade3x3Wins() {
-		return rankedPremade3x3Wins;
+	public String getWins5v5() {
+		return wins5v5;
 	}
 
-	public String getRankedPremade5x5Wins() {
-		return rankedPremade5x5Wins;
+	public String getKills5v5() {
+		return kills5v5;
 	}
 
-	public String getRankedTeam3x3Wins() {
-		return rankedTeam3x3Wins;
+	public String getAssists5v5() {
+		return assists5v5;
 	}
 
-	public String getRankedTeam5x5Wins() {
-		return rankedTeam5x5Wins;
+	public String getMinionkills5v5() {
+		return minionkills5v5;
 	}
 
-	public String getRankedSolo5x5Wins() {
-		return rankedSolo5x5Wins;
+	public String getNeutralminionkills5v5() {
+		return neutralminionkills5v5;
 	}
 
-	public String getUnrankedWins() {
-		return unrankedWins;
+	public String getTurretsdestroyed5v5() {
+		return turretsdestroyed5v5;
 	}
 
-	public String getCoopVsAIWins() {
-		return coopVsAIWins;
+	public String getWinsdom() {
+		return winsdom;
 	}
 
-	public String getnChampKills() {
-		return nChampKills;
+	public String getKillsdom() {
+		return killsdom;
 	}
 
-	public String getnAssists() {
-		return nAssists;
+	public String getMostkillsdom() {
+		return mostkillsdom;
 	}
 
-	public String getnMinionKills() {
-		return nMinionKills;
+	public String getAssistsdom() {
+		return assistsdom;
 	}
 
-	public String getnNeutralMonsterKills() {
-		return nNeutralMonsterKills;
+	public String getMostassistsdom() {
+		return mostassistsdom;
 	}
 
-	public String getnTotalTurretKills() {
-		return nTotalTurretKills;
+	public String getHighestscoredom() {
+		return highestscoredom;
 	}
 
-	public String getrChampKills() {
-		return rChampKills;
+	public String getNodescaptureddom() {
+		return nodescaptureddom;
 	}
 
-	public String getrAssists() {
-		return rAssists;
+	public String getMostnodescaptureddom() {
+		return mostnodescaptureddom;
 	}
 
-	public String getrMinionKills() {
-		return rMinionKills;
+	public String getNodesneutralizeddom() {
+		return nodesneutralizeddom;
 	}
 
-	public String getrNeutralMonsterKills() {
-		return rNeutralMonsterKills;
+	public String getMostnodesneutralizeddom() {
+		return mostnodesneutralizeddom;
 	}
 
-	public String getrTotalTurretKills() {
-		return rTotalTurretKills;
+	public String getWins3v3() {
+		return wins3v3;
 	}
 
-	public String getTvtChampKills() {
-		return tvtChampKills;
+	public String getKills3v3() {
+		return kills3v3;
 	}
 
-	public String getTvtAssists() {
-		return tvtAssists;
+	public String getAssists3v3() {
+		return assists3v3;
 	}
 
-	public String getTvtMinionKills() {
-		return tvtMinionKills;
+	public String getMinionkills3v3() {
+		return minionkills3v3;
 	}
 
-	public String getTvtNeutralMonsterKills() {
-		return tvtNeutralMonsterKills;
+	public String getNeutralminionkills3v3() {
+		return neutralminionkills3v3;
 	}
 
-	public String getTvtTotalTurretKills() {
-		return tvtTotalTurretKills;
+	public String getTurretsdestroyed3v3() {
+		return turretsdestroyed3v3;
 	}
+
+
+
 }
